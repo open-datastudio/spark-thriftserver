@@ -8,7 +8,7 @@ ingress:
 deploy:
   dependencies:
     - project: open-datastudio/hive-metastore
-      level: OPTIONAL
+      level: REQUIRED
   implements: open-datastudio/spark-thriftserver
   paramGroups:
     - name: Spark configurations
