@@ -7,6 +7,7 @@ deploy:
       - k8s/spark-conf.yaml
       - k8s/spark-thriftserver.yaml
       - k8s/spark-thriftserver-info.yaml
+      - k8s/beeline.yaml
 profiles:
   - name: minikube
     patches:

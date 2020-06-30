@@ -5,6 +5,16 @@ metadata:
 data:
   spark-container-image: opendatastudio/spark:v3.1.0-snapshot-20200618-01
   spark-defaults.conf: |
+    spark.executor.cores                                          4
+    spark.executor.memory                                         8g
+    spark.dynamicAllocation.enabled                               true
+    spark.dynamicAllocation.minExecutors                          1
+    spark.dynamicAllocation.maxExecutors                          10
+    spark.dynamicAllocation.initialExecutors                      1
+    spark.dynamicAllocation.shuffleTracking.enabled               true
+    spark.dynamicAllocation.executorIdleTimeout                   600s
+    spark.dynamicAllocation.schedulerBacklogTimeout               60s
+
     # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
     spark.kubernetes.executor.label.pod.staroid.com/isolation     dedicated
 
@@ -13,6 +23,11 @@ data:
 
     # 'true' for spot instance. 'true' or 'false'
     spark.kubernetes.executor.label.pod.staroid.com/spot          true
+
+    spark.scheduler.mode                                          FAIR
+    spark.serializer                                              org.apache.spark.serializer.KryoSerializer
+    spark.sql.adaptive.enabled                                    true
+    spark.sql.adaptive.coalescePartitions.enabled                 true
   run-thrift-server.sh: |
     #!/bin/bash
     $SPARK_HOME/sbin/start-thriftserver.sh \
