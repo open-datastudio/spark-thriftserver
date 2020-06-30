@@ -1,0 +1,39 @@
+apiVersion: beta/v1
+build:
+  skaffold:
+    file: skaffold.yaml
+ingress:
+  - serviceName: spark-ui
+    port: 4040
+deploy:
+  dependencies:
+    - project: open-datastudio/hive-metastore
+      level: OPTIONAL
+  implements: open-datastudio/spark-thriftserver
+  paramGroups:
+    - name: Spark configurations
+      collapsed: true
+      params:
+      - name: spark-image
+        type: STRING
+        description: Spark docker image. https://hub.docker.com/repository/docker/opendatastudio/spark
+        defaultValue: opendatastudio/spark:v3.1.0-snapshot-20200618-01
+        paths:
+        - Deployment:spark-thriftserver:spec.template.spec.containers[0].image
+      - name: spark-defaults.conf
+        type: STRING
+        description: Spark properties
+        defaultValue: |
+          spark.sql.catalogImplementation                               hive
+
+          # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
+          spark.kubernetes.executor.label.pod.staroid.com/isolation     dedicated
+      
+          # 'standard-2', 'standard-4', 'standard-8' available. Note that spark.executor.cores|memory need to be changed accordingly.
+          spark.kubernetes.executor.label.pod.staroid.com/instance-type standard-4
+      
+          # 'true' for spot instance. 'true' or 'false'
+          spark.kubernetes.executor.label.pod.staroid.com/spot          true
+        paths:
+        - ConfigMap:spark-conf:data["spark-defaults.conf"]
+  

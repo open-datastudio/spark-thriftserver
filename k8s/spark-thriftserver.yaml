@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-thriftserver
+spec:
+  replicas: 1
+  strategy:
+    type: "Recreate"
+  selector:
+    matchLabels:
+      app: spark-thriftserver
+  template:
+    metadata:
+      name: spark-thriftserver
+      labels:
+        app: spark-thriftserver
+    spec:
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsUser: 185
+        runAsGroup: 185      
+      containers:
+      - name: spark
+        image: opendatastudio/spark:v3.1.0-snapshot-20200618-01 # 3.1.0 image has ps command
+        command:
+        - "bash"
+        - "-c"
+        - >-
+          mkdir -p $SPARK_CONF_DIR &&
+          cp /spark-conf-volume/* $SPARK_CONF_DIR/ &&
+          bash /spark-conf-volume/runtime-initialize-spark-defaults.sh &&
+          bash /spark-conf-volume/run-thrift-server.sh
+        env:
+        - name: SPARK_HOME
+          value: /opt/spark
+        - name: SPARK_CONF_DIR
+          value: /home/spark/conf
+        - name: SPARK_LOG_DIR
+          value: /tmp/log/spark
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "1000Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1000Mi"
+        volumeMounts:
+        - name: spark-conf-volume
+          mountPath: /spark-conf-volume
+      volumes:
+      - name: spark-conf-volume
+        configMap:
+          name: spark-conf
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: spark-thriftserver
+spec:
+  ports:
+    - name: thrift
+      port: 10000
+  selector:
+    app: spark-thriftserver
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: spark-ui
+spec:
+  ports:
+    - name: http
+      port: 4040
+  selector:
+    app: spark-thriftserver

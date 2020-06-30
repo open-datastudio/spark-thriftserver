@@ -1,0 +1,43 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: spark-conf
+data:
+  spark-defaults.conf: |
+    spark.sql.catalogImplementation                               hive
+
+    # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
+    spark.kubernetes.executor.label.pod.staroid.com/isolation     dedicated
+
+    # 'standard-2', 'standard-4', 'standard-8' available. Note that spark.executor.cores|memory need to be changed accordingly.
+    spark.kubernetes.executor.label.pod.staroid.com/instance-type standard-4
+
+    # 'true' for spot instance. 'true' or 'false'
+    spark.kubernetes.executor.label.pod.staroid.com/spot          true
+  runtime-initialize-spark-defaults.sh: |
+    #!/bin/bash
+    SPARK_DEFAULTS_CONF=$SPARK_CONF_DIR/spark-defaults.conf
+
+    # generate hive metastore connection info
+    echo $HIVE_METASTORE_NAMESPACE | grep not-imported > /dev/null
+    if [ $? -ne 0 ]; then
+      # add a newline
+      echo "" >> $SPARK_DEFAULTS_CONF
+      # add generated metastore uri
+      cat <<EOT >> $SPARK_DEFAULTS_CONF
+    spark.hadoop.hive.metastore.uris  thrift://$HIVE_METASTORE_SERVICE.$HIVE_METASTORE_NAMESPACE:9083
+    EOT
+    fi
+  run-thrift-server.sh: |
+    #!/bin/bash
+    $SPARK_HOME/sbin/start-thriftserver.sh \
+      --properties-file $SPARK_CONF_DIR/spark-defaults.conf
+
+    ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
+    RUNNING=$?
+
+    while [ $RUNNING -eq 0 ]; do
+      sleep 10
+      ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
+      RUNNING=$?
+    done

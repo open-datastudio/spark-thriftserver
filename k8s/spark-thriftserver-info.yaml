@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-thriftserver-info
+  labels:
+    # see https://docs.staroid.com/project/dependency.html
+    dependency.staroid.com/export: spark-thriftserver-info
+data:
+  SPARK_THRIFTSERVER_NAMESPACE: "{{.Namespace}}"
+  SPARK_THRIFTSERVER_SERVICE: spark-thriftserver
+  SPARK_THRIFTSERVER_JDBC_URL: "jdbc:hive2://spark-thriftserver.{{.Namespace}}:10000"
