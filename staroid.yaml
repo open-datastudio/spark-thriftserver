@@ -25,8 +25,6 @@ deploy:
         type: STRING
         description: Spark properties
         defaultValue: |
-          spark.sql.catalogImplementation                               hive
-
           # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
           spark.kubernetes.executor.label.pod.staroid.com/isolation     dedicated
       

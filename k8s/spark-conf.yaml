@@ -5,9 +5,6 @@ metadata:
 data:
   spark-container-image: opendatastudio/spark:v3.1.0-snapshot-20200618-01
   spark-defaults.conf: |
-    spark.master                                                  k8s://https://kubernetes.default.svc
-    spark.sql.catalogImplementation                               hive
-
     # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
     spark.kubernetes.executor.label.pod.staroid.com/isolation     dedicated
 
@@ -23,7 +20,9 @@ data:
       -c spark.hadoop.hive.metastore.uris=thrift://$HIVE_METASTORE_SERVICE.$HIVE_METASTORE_NAMESPACE:9083 \
       -c spark.kubernetes.container.image=$SPARK_CONTAINER_IMAGE \
       -c spark.driver.bindAddress=0.0.0.0 \
-      -c spark.driver.host=spark-thriftserver
+      -c spark.driver.host=spark-thriftserver \
+      -c spark.master=k8s://https://kubernetes.default.svc \
+      -c spark.sql.catalogImplementation=hive
 
     ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
     RUNNING=$?
