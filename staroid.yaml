@@ -20,6 +20,7 @@ deploy:
         defaultValue: opendatastudio/spark:v3.1.0-snapshot-20200618-01
         paths:
         - Deployment:spark-thriftserver:spec.template.spec.containers[0].image
+        - ConfigMap:spark-conf:data.spark-container-image
       - name: spark-defaults.conf
         type: STRING
         description: Spark properties
@@ -36,4 +37,3 @@ deploy:
           spark.kubernetes.executor.label.pod.staroid.com/spot          true
         paths:
         - ConfigMap:spark-conf:data["spark-defaults.conf"]
-  

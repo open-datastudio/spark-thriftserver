@@ -3,7 +3,9 @@ apiVersion: v1
 metadata:
   name: spark-conf
 data:
+  spark-container-image: opendatastudio/spark:v3.1.0-snapshot-20200618-01
   spark-defaults.conf: |
+    spark.master                                                  k8s://https://kubernetes.default.svc
     spark.sql.catalogImplementation                               hive
 
     # 'dedicated' for dedicated kubernetes node. 'dedicated' or 'sandboxed'
@@ -14,24 +16,14 @@ data:
 
     # 'true' for spot instance. 'true' or 'false'
     spark.kubernetes.executor.label.pod.staroid.com/spot          true
-  runtime-initialize-spark-defaults.sh: |
-    #!/bin/bash
-    SPARK_DEFAULTS_CONF=$SPARK_CONF_DIR/spark-defaults.conf
-
-    # generate hive metastore connection info
-    echo $HIVE_METASTORE_NAMESPACE | grep not-imported > /dev/null
-    if [ $? -ne 0 ]; then
-      # add a newline
-      echo "" >> $SPARK_DEFAULTS_CONF
-      # add generated metastore uri
-      cat <<EOT >> $SPARK_DEFAULTS_CONF
-    spark.hadoop.hive.metastore.uris  thrift://$HIVE_METASTORE_SERVICE.$HIVE_METASTORE_NAMESPACE:9083
-    EOT
-    fi
   run-thrift-server.sh: |
     #!/bin/bash
     $SPARK_HOME/sbin/start-thriftserver.sh \
-      --properties-file $SPARK_CONF_DIR/spark-defaults.conf
+      --properties-file $SPARK_CONF_DIR/spark-defaults.conf \
+      -c spark.hadoop.hive.metastore.uris=thrift://$HIVE_METASTORE_SERVICE.$HIVE_METASTORE_NAMESPACE:9083 \
+      -c spark.kubernetes.container.image=$SPARK_CONTAINER_IMAGE \
+      -c spark.driver.bindAddress=0.0.0.0 \
+      -c spark.driver.host=spark-thriftserver
 
     ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
     RUNNING=$?

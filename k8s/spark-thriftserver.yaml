@@ -29,8 +29,10 @@ spec:
         - >-
           mkdir -p $SPARK_CONF_DIR &&
           cp /spark-conf-volume/* $SPARK_CONF_DIR/ &&
-          bash /spark-conf-volume/runtime-initialize-spark-defaults.sh &&
           bash /spark-conf-volume/run-thrift-server.sh
+        envFrom:
+        - configMapRef:
+            name: hive-metastore-info
         env:
         - name: SPARK_HOME
           value: /opt/spark
@@ -38,6 +40,11 @@ spec:
           value: /home/spark/conf
         - name: SPARK_LOG_DIR
           value: /tmp/log/spark
+        - name: SPARK_CONTAINER_IMAGE
+          valueFrom:
+            configMapKeyRef:
+              name: spark-conf
+              key: spark-container-image
         resources:
           requests:
             cpu: "100m"
@@ -61,6 +68,10 @@ spec:
   ports:
     - name: thrift
       port: 10000
+    - name: spark-driver
+      port: 22321
+    - name: spark-blockmanager
+      port: 22322
   selector:
     app: spark-thriftserver
 ---

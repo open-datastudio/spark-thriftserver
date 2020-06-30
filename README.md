@@ -16,5 +16,5 @@ Spark thriftserver
 Run locally with [skaffold](https://skaffold.dev) command.
 
 ```
-$ skaffold dev --port-forward
+$ skaffold dev --port-forward -p minikube
 ```
