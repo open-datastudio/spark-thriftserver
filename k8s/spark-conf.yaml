@@ -21,14 +21,18 @@ data:
       -c spark.kubernetes.container.image=$SPARK_CONTAINER_IMAGE \
       -c spark.driver.bindAddress=0.0.0.0 \
       -c spark.driver.host=spark-thriftserver \
+      -c spark.driver.port=22321 \
+      -c spark.blockManager.port=22322 \
       -c spark.master=k8s://https://kubernetes.default.svc \
       -c spark.sql.catalogImplementation=hive
+
+    tail -F /tmp/log/spark/* &
 
     ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
     RUNNING=$?
 
     while [ $RUNNING -eq 0 ]; do
       sleep 10
-      ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 > /dev/null
+      ps -ef | grep org.apache.spark.sql.hive.thriftserver.HiveThriftServer2 | grep -v grep > /dev/null
       RUNNING=$?
     done
