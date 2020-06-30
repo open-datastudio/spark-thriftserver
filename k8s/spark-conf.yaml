@@ -18,6 +18,7 @@ data:
     $SPARK_HOME/sbin/start-thriftserver.sh \
       --properties-file $SPARK_CONF_DIR/spark-defaults.conf \
       -c spark.hadoop.hive.metastore.uris=thrift://$HIVE_METASTORE_SERVICE.$HIVE_METASTORE_NAMESPACE:9083 \
+      -c spark.kubernetes.namespace=$SPARK_NAMESPACE \
       -c spark.kubernetes.container.image=$SPARK_CONTAINER_IMAGE \
       -c spark.driver.bindAddress=0.0.0.0 \
       -c spark.driver.host=spark-thriftserver \
