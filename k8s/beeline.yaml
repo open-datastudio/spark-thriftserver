@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beeline
+  template:
+    metadata:
+      name: beeline
+      labels:
+        app: beeline
+    spec:
+      securityContext:
+        runAsUser: 185
+        runAsGroup: 185
+      initContainers:
+      - name: ttyd-download
+        image: busybox
+        command:
+        - "sh"
+        - "-c"
+        - >-
+          wget https://github.com/tsl0922/ttyd/releases/download/1.6.0/ttyd_linux.x86_64 -O /ttyd/ttyd && chmod +x /ttyd/ttyd
+        volumeMounts:
+        - name: ttyd-volume
+          mountPath: /ttyd
+      containers:
+      - name: spark
+        image: opendatastudio/spark:v3.1.0-snapshot-20200618-01 # 3.1.0 image has ps command
+        command:
+        - "bash"
+        - "-c"
+        - >-
+          /ttyd/ttyd
+          /opt/spark/bin/beeline -u jdbc:hive2://spark-thriftserver:10000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "1000Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1000Mi"
+        volumeMounts:
+        - name: ttyd-volume
+          mountPath: /ttyd
+      volumes:
+      - name: ttyd-volume
+        emptyDir: {}
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: beeline
+  annotations:
+    service.staroid.com/link: "show"
+spec:
+  ports:
+    - name: ttyd
+      port: 7681
+  selector:
+    app: beeline
